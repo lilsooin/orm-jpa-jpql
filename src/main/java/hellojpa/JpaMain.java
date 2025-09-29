@@ -21,6 +21,7 @@ public class JpaMain {
             Member member = new Member();
             member.setUsername("member1");
             member.setAge(10);
+            member.setType(MemberType.ADMIN);
 
             member.setTeam(team);
 
@@ -29,18 +30,10 @@ public class JpaMain {
             em.flush();
             em.clear();
 
-            String query = "select m from Member m inner join m.team t";
+            String query = "select m.username, 'HELLO', true from Member m " +
+                    "where m.type = jpql.MemberType.ADMIN";
 
-            // 세타조인
-            String query2 = "select m from Member m, Team t where m.username = t.name";
-
-            // 조인 대상 필터링
-            String query3 = "select m from Member m left join m.team t on t.name = 'teamA'";
-
-            // 연관관계 없는 엔티티 외부 조인
-            String query4 = "select m from Member m left join Team t on m.username = t.name";
-
-            List<Member> result = em.createQuery(query4, Member.class)
+            List<Member> result = em.createQuery(query, Member.class)
                     .getResultList();
 
             tx.commit();
