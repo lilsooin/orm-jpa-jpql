@@ -14,46 +14,55 @@ public class JpaMain {
         tx.begin();
 
         try {
-            Team team = new Team();
-            team.setName("teamA");
-            em.persist(team);
+            Team teamA = new Team();
+            teamA.setName("teamA");
+            em.persist(teamA);
 
-            Member member = new Member();
-            member.setUsername("member1");
-            member.setAge(10);
-            member.setType(MemberType.ADMIN);
+            Team teamB = new Team();
+            teamB.setName("teamB");
+            em.persist(teamB);
 
-            member.setTeam(team);
+            Member member1 = new Member();
+            member1.setUsername("member1");
+            member1.setTeam(teamA);
+            em.persist(member1);
 
-            em.persist(member);
+            Member member2 = new Member();
+            member2.setUsername("member2");
+            member2.setTeam(teamA);
+            em.persist(member2);
+
+            Member member3 = new Member();
+            member3.setUsername("member3");
+            member3.setTeam(teamB);
+            em.persist(member3);
 
             em.flush();
             em.clear();
 
-            String query =
-                    "select " +
-                            "case when m.age <= 10 then '학생요금' " +
-                            "     when m.age >= 60 then '경로요금' " +
-                            "     else '일반요금' " +
-                            "end " +
-                            "from Member m";
+            String query = "select m from Member m";
 
-            String query2 = "select coalesce(m.username, '이름 없는 회원') as username " +
-                    "from Member m";
+            String query2 = "select m from Member m join fetch m.team";
 
-            String query3 = "select nullif(m.username, '이름 없는 회원') as username " +
-                    "from Member m";
+            // collection fetch join
+            String query3 = "select m from Team t join fetch t.members";
 
-            String query4 = "select m.team.name From Member m";
+            // collection fetch join distinct
+            String query4 = "select distinct m from Team t join fetch t.members";
 
-            String query5 = "select t.members from Team t";
+            List<Member> result = em.createQuery(query2, Member.class)
+                        .getResultList();
 
-            List<String> result = em.createQuery(query, String.class)
-                    .getResultList();
+            for(Member member : result) {
+                System.out.println("member = " + member.getUsername() + "," + member.getTeam().getName());
+                // 회원1, 팀A(SQL)
+                // 회원2, 팀A(1차 캐시)
+                // 회원3, 팀B(SQL)
 
-            for(String s : result) {
-                System.out.println("s = " + s);
+                // 회원 100명 -> N + 1 (1+N 문제)
+                // 즉시로딩이던 지연로딩이던 발생함
             }
+
 
             tx.commit();
         } catch (Exception e) {
