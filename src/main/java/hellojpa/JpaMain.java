@@ -40,29 +40,13 @@ public class JpaMain {
             em.flush();
             em.clear();
 
-            String query = "select m from Member m";
+            List<Member> resultList = em.createNamedQuery("Member.findByUsername", Member.class)
+                    .setParameter("username", "member1")
+                    .getResultList();
 
-            String query2 = "select m from Member m join fetch m.team";
-
-            // collection fetch join
-            String query3 = "select m from Team t join fetch t.members";
-
-            // collection fetch join distinct
-            String query4 = "select distinct m from Team t join fetch t.members";
-
-            List<Member> result = em.createQuery(query2, Member.class)
-                        .getResultList();
-
-            for(Member member : result) {
-                System.out.println("member = " + member.getUsername() + "," + member.getTeam().getName());
-                // 회원1, 팀A(SQL)
-                // 회원2, 팀A(1차 캐시)
-                // 회원3, 팀B(SQL)
-
-                // 회원 100명 -> N + 1 (1+N 문제)
-                // 즉시로딩이던 지연로딩이던 발생함
+            for (Member member : resultList) {
+                System.out.println("member = " + member);
             }
-
 
             tx.commit();
         } catch (Exception e) {
